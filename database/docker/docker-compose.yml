@@ -1,4 +1,3 @@
-﻿version: '3.8'
 services:
   mysql:
     image: mysql:8.0
@@ -13,6 +12,7 @@ services:
       - '3306:3306'
     volumes:
       - mysql_data:/var/lib/mysql
+      - ../schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
 
 volumes:
   mysql_data:

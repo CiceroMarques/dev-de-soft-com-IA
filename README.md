@@ -10,7 +10,7 @@ Este sistema foi organizado para seguir a arquitetura indicada no guia do projet
 - Separação clara entre camadas: front-end e back-end são independentes e se comunicam por API.
 - Desenvolvimento com foco em TDD (Test-Driven Development).
 
-## Estrutura proposta
+## Estrutura
 
 ```text
 /
@@ -22,18 +22,20 @@ Este sistema foi organizado para seguir a arquitetura indicada no guia do projet
 ├── backend/
 │   ├── src/
 │   ├── tests/
-│   └── config/
+│   ├── config/
+│   ├── package.json
+│   └── README.md
 ├── database/
-│   └── docker/
+│   ├── docker/
+│   └── schema.sql
 ├── README.md
-├── index.html
-├── recuperar-senha.html
-├── termos-privacidade.html
-├── styles.css
-├── script.js
 └── .github/
     └── copilot-instructions.md
 ```
+
+O backend disponibiliza o CRUD de salas pela API REST. O modelo e as instruções de execução estão em [backend/README.md](./backend/README.md).
+
+Para executar os testes automatizados, acesse `backend/` e rode `npm install` seguido de `npm test`. A API requer o MySQL iniciado pelo Docker Compose.
 
 ## Padrões visuais
 
