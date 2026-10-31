@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#05060E" />
+    <title>Reserve.me</title>
+    <link rel="stylesheet" href="../styles/styles.css" />
+    <script src="../scripts/script.js" defer></script>
+  </head>
+  <body>
+    <main class="page">
+      <section class="login" aria-labelledby="brand">
+        <h1 class="brand" id="brand">
+          Reserve<span>.</span>me
+        </h1>
+
+        <form class="login-form validated-form" novalidate>
+          <div class="field">
+            <p class="field-error" id="email-error" aria-live="polite"></p>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="Email"
+              autocomplete="email"
+              class="required-field"
+              aria-required="true"
+              aria-describedby="email-error"
+              aria-invalid="false"
+            />
+          </div>
+
+          <div class="field">
+            <p class="field-error" id="password-error" aria-live="polite"></p>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              placeholder="Senha"
+              autocomplete="current-password"
+              class="required-field"
+              aria-required="true"
+              aria-describedby="password-error"
+              aria-invalid="false"
+            />
+          </div>
+
+          <p class="form-required-message" aria-live="polite"></p>
+          <button class="submit-button" type="submit">Entrar</button>
+          <a class="recovery-link" href="recuperar-senha.html">Esqueceu sua senha?</a>
+        </form>
+      </section>
+
+      <footer class="footer">
+        <a href="termos-privacidade.html#termos">Termos de uso</a>
+        <span aria-hidden="true">·</span>
+        <a href="termos-privacidade.html#privacidade">Privacidade</a>
+      </footer>
+    </main>
+  </body>
+</html>
