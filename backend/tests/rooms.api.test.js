@@ -45,7 +45,16 @@ describe('API de salas', () => {
   let app;
 
   beforeEach(() => {
-    app = createApp({ roomsRepository: createInMemoryRepository() });
+    app = createApp({
+      roomsRepository: createInMemoryRepository(),
+      reservationsRepository: {
+        async findAll() { return []; },
+        async findById() { return null; },
+        async create(reservation) { return reservation; },
+        async update() { return null; },
+        async delete() { return false; },
+      },
+    });
   });
 
   it('lista todas as salas', async () => {

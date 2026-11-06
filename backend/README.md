@@ -54,6 +54,39 @@ A API fica disponível em `http://localhost:3000`. As configurações do banco p
 
 IDs inválidos retornam `400`, salas inexistentes retornam `404` e dados inválidos retornam `400` com a lista de erros.
 
+## Reservas
+
+Uma reserva referencia uma sala pelo seu identificador:
+
+```json
+{
+  "sala": 1,
+  "data": "2026-12-10",
+  "inicio": "09:00",
+  "fim": "10:30",
+  "responsavel": "Ana Silva",
+  "finalidade": "Reunião de equipe",
+  "situacao": "Pendente"
+}
+```
+
+- `sala`: ID inteiro de uma sala existente.
+- `data`: data válida no formato `AAAA-MM-DD`.
+- `inicio` e `fim`: horários no formato `HH:mm`; o horário final deve ser posterior ao inicial.
+- `responsavel`: texto obrigatório com até 120 caracteres.
+- `finalidade`: texto obrigatório com até 500 caracteres.
+- `situacao`: `Pendente`, `Aprovada` ou `Cancelada`. Se omitida na criação, começa como `Pendente`.
+
+| Método | Rota | Resultado |
+|---|---|---|
+| `GET` | `/api/reservas` | Lista as reservas por data e horário |
+| `GET` | `/api/reservas/:id` | Busca uma reserva |
+| `POST` | `/api/reservas` | Cria uma reserva; retorna `201` |
+| `PUT` | `/api/reservas/:id` | Atualiza todos os campos da reserva |
+| `DELETE` | `/api/reservas/:id` | Remove a reserva; retorna `204` |
+
+Salas referenciadas não podem ser excluídas enquanto houver reservas associadas. A API ainda não verifica conflitos de horário entre reservas; essa regra depende de definir se pedidos pendentes também devem bloquear o horário.
+
 ## Testes automatizados
 
 Execute na pasta `backend`:
@@ -62,4 +95,4 @@ Execute na pasta `backend`:
 npm test
 ```
 
-Os testes exercitam os endpoints HTTP com um repositório em memória e cobrem também a conversão e persistência de dados do repositório MySQL mockado; não exigem que o banco esteja iniciado.
+Os testes exercitam os endpoints HTTP com repositórios em memória e cobrem a conversão e persistência de dados dos repositórios MySQL mockados; não exigem que o banco esteja iniciado.

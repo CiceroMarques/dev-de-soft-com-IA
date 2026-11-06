@@ -4,10 +4,12 @@ const mysql = require('mysql2/promise');
 const databaseConfig = require('../config/database');
 const { createApp } = require('./app');
 const { createRoomsRepository } = require('./repositories/rooms.repository');
+const { createReservationsRepository } = require('./repositories/reservations.repository');
 
 async function startServer() {
   const pool = mysql.createPool({
     ...databaseConfig,
+    dateStrings: true,
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
@@ -21,7 +23,10 @@ async function startServer() {
     throw error;
   }
 
-  const app = createApp({ roomsRepository: createRoomsRepository(pool) });
+  const app = createApp({
+    roomsRepository: createRoomsRepository(pool),
+    reservationsRepository: createReservationsRepository(pool),
+  });
   const port = Number(process.env.PORT || 3000);
   const server = app.listen(port, () => {
     console.log(`API Reserve.me disponível na porta ${port}.`);
