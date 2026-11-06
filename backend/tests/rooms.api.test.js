@@ -47,6 +47,12 @@ describe('API de salas', () => {
   beforeEach(() => {
     app = createApp({
       roomsRepository: createInMemoryRepository(),
+      authenticateRequest: (req, res, next) => next(),
+      authService: {
+        async login() {},
+        async requestPasswordReset() {},
+        async resetPassword() {},
+      },
       reservationsRepository: {
         async findAll() { return []; },
         async findById() { return null; },

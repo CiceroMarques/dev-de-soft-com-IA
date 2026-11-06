@@ -26,6 +26,45 @@ npm start
 
 A API fica disponível em `http://localhost:3000`. As configurações do banco podem ser alteradas no arquivo `.env`.
 
+## Login e recuperação de senha
+
+Configure no `.env`:
+
+- `JWT_SECRET`: segredo aleatório de pelo menos 32 caracteres. Gere com `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`.
+- `FRONTEND_URL`: URL base da pasta de páginas do front-end, por exemplo `http://localhost:5500/frontend/pages`. A origem desta URL é a única permitida pelo CORS.
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` e `SMTP_FROM`: credenciais do provedor de e-mail.
+- `SEED_USER_NAME`, `SEED_USER_EMAIL` e `SEED_USER_PASSWORD`: dados da primeira conta de gerente; senha com pelo menos 12 caracteres e até 72 bytes.
+
+Crie a primeira conta após configurar o `.env`:
+
+```powershell
+npm run seed:user
+```
+
+O seed não altera a senha se o e-mail já existir. Nunca versione o `.env` nem use credenciais de exemplo em produção.
+
+### Endpoints públicos
+
+| Método | Rota | Resultado |
+|---|---|---|
+| `POST` | `/api/auth/login` | Valida e-mail e senha e retorna JWT com validade de 15 minutos |
+| `POST` | `/api/auth/forgot-password` | Solicita por e-mail um link de uso único, válido por 30 minutos |
+| `POST` | `/api/auth/reset-password` | Define uma nova senha usando o token recebido por e-mail |
+
+Exemplo de login:
+
+```json
+{ "email": "gerente@example.com", "password": "senha-configurada-no-seed" }
+```
+
+A resposta contém `accessToken`, `expiresIn` e informações públicas do usuário. Para usar as rotas de salas e reservas, envie o JWT no cabeçalho `Authorization` usando o esquema Bearer. Sem token válido, essas rotas retornam `401`.
+
+Para redefinir a senha, envie `POST /api/auth/reset-password` com `{ "token": "<token do link>", "password": "<nova senha>" }`. O endpoint não revela se um e-mail existe; tokens são armazenados somente como hash, expiram e só podem ser usados uma vez. O front-end precisa implementar a página `redefinir-senha.html` para capturar o token do link enviado e chamar esse endpoint.
+
+Os endpoints públicos têm limitação de tentativas por endereço IP. A limitação padrão usa memória local, adequada a uma instância de desenvolvimento; implantação com múltiplas instâncias deve configurar armazenamento compartilhado.
+
+No momento, todas as contas autenticadas têm acesso às mesmas operações de salas e reservas. Papéis e permissões diferentes (por exemplo, gerente aprovar solicitações) não fazem parte deste escopo. JWTs já emitidos podem continuar válidos por até 15 minutos após uma redefinição de senha.
+
 ## Modelo de sala
 
 ```json
@@ -96,3 +135,13 @@ npm test
 ```
 
 Os testes exercitam os endpoints HTTP com repositórios em memória e cobrem a conversão e persistência de dados dos repositórios MySQL mockados; não exigem que o banco esteja iniciado.
+
+## Documentação JSDoc
+
+As funções, parâmetros, retornos e fluxos de autenticação estão documentados com JSDoc. Gere a documentação HTML executando:
+
+```powershell
+npm run docs
+```
+
+Os arquivos gerados ficam em `backend/docs/api/`; a referência principal é [backend/docs/api/index.html](./docs/api/index.html).

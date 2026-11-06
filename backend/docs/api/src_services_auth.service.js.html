@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: src/services/auth.service.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: src/services/auth.service.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>const { createHash, randomBytes } = require('node:crypto');
+
+const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
+const RESET_TOKEN_TTL_MINUTES = 30;
+const MIN_PASSWORD_LENGTH = 12;
+const DUMMY_PASSWORD_HASH = '$2b$12$3VAmHtwo52zZlNodEdQIOOECDry8SKpUIr00en4OH//H3fng8KETm';
+
+/**
+ * Creates an HTTP-aware error for authentication flows.
+ *
+ * @param {string} message - Safe message suitable for an API response.
+ * @param {number} statusCode - HTTP status code.
+ * @returns {Error} Error carrying an HTTP status code.
+ */
+function createAuthError(message, statusCode) {
+  const error = new Error(message);
+  error.statusCode = statusCode;
+  return error;
+}
+
+/**
+ * Hashes a reset token before it is stored or looked up in the database.
+ *
+ * @param {string} token - Random reset token.
+ * @returns {string} SHA-256 hexadecimal digest.
+ */
+function hashResetToken(token) {
+  return createHash('sha256').update(token).digest('hex');
+}
+
+/**
+ * Creates authentication and password recovery operations.
+ *
+ * @param {object} dependencies - Injected persistence and security adapters.
+ * @param {object} dependencies.usersRepository - User account repository.
+ * @param {object} dependencies.passwordResetTokensRepository - One-time token repository.
+ * @param {object} dependencies.mailer - Adapter with `sendPasswordReset(email, url)`.
+ * @param {Function} dependencies.hashPassword - Password hashing function.
+ * @param {Function} dependencies.verifyPassword - Password comparison function.
+ * @param {Function} dependencies.createAccessToken - Access-token signer.
+ * @param {string} dependencies.frontendUrl - Base URL for the reset form.
+ * @param {number} [dependencies.resetTokenTtlMinutes=30] - Reset token lifetime.
+ * @param {string} [dependencies.dummyPasswordHash] - Bcrypt hash used for timing parity on unknown accounts.
+ * @returns {object} Authentication and recovery operations.
+ */
+function createAuthService({
+  usersRepository,
+  passwordResetTokensRepository,
+  mailer,
+  hashPassword,
+  verifyPassword,
+  createAccessToken,
+  frontendUrl,
+  resetTokenTtlMinutes = RESET_TOKEN_TTL_MINUTES,
+  dummyPasswordHash = DUMMY_PASSWORD_HASH,
+}) {
+  if (
+    !usersRepository ||
+    !passwordResetTokensRepository ||
+    !mailer ||
+    typeof hashPassword !== 'function' ||
+    typeof verifyPassword !== 'function' ||
+    typeof createAccessToken !== 'function' ||
+    typeof frontendUrl !== 'string'
+  ) {
+    throw new TypeError('Dependências incompletas para o serviço de autenticação.');
+  }
+  if (!Number.isFinite(resetTokenTtlMinutes) || resetTokenTtlMinutes &lt; 1) {
+    throw new TypeError('O prazo do token de recuperação deve ser positivo.');
+  }
+  try {
+    const parsedFrontendUrl = new URL(frontendUrl);
+    if (!['http:', 'https:'].includes(parsedFrontendUrl.protocol)) {
+      throw new TypeError('FRONTEND_URL deve usar HTTP ou HTTPS.');
+    }
+  } catch (error) {
+    if (error instanceof TypeError &amp;&amp; error.message === 'FRONTEND_URL deve usar HTTP ou HTTPS.') {
+      throw error;
+    }
+    throw new TypeError('FRONTEND_URL deve ser uma URL válida.');
+  }
+
+  return {
+    /**
+     * Verifies credentials and returns a short-lived access token.
+     *
+     * @param {string} email - User email address.
+     * @param {string} password - Plain-text password received over HTTPS.
+     * @returns {Promise&lt;object>} Access token and safe public user information.
+     * @throws {Error} With status 401 when the credentials are invalid.
+     */
+    async login(email, password) {
+      const normalizedEmail = email.trim().toLowerCase();
+      const user = await usersRepository.findByEmail(normalizedEmail);
+      const passwordMatches = await verifyPassword(
+        password,
+        user ? user.passwordHash : dummyPasswordHash,
+      );
+
+      if (!user || !passwordMatches) {
+        throw createAuthError('E-mail ou senha inválidos.', 401);
+      }
+
+      return {
+        accessToken: createAccessToken(user),
+        expiresIn: ACCESS_TOKEN_TTL_SECONDS,
+        user: { id: user.id, nome: user.nome, email: user.email },
+      };
+    },
+
+    /**
+     * Sends a single-use password reset link when the email belongs to an account.
+     * The same success response is used for registered and unknown addresses.
+     *
+     * @param {string} email - Account email address.
+     * @returns {Promise&lt;object>} Non-enumerating confirmation.
+     */
+    async requestPasswordReset(email) {
+      const genericResponse = {
+        message: 'Se o e-mail estiver cadastrado, enviaremos instruções para redefinir a senha.',
+      };
+      const user = await usersRepository.findByEmail(email.trim().toLowerCase());
+      if (!user) {
+        return genericResponse;
+      }
+
+      const token = randomBytes(32).toString('hex');
+      const tokenHash = hashResetToken(token);
+      const expiresAt = new Date(Date.now() + resetTokenTtlMinutes * 60_000);
+      await passwordResetTokensRepository.create(user.id, tokenHash, expiresAt);
+
+      const resetUrl = new URL(
+        'redefinir-senha.html',
+        `${frontendUrl.replace(/\/+$/, '')}/`,
+      );
+      resetUrl.searchParams.set('token', token);
+
+      try {
+        await mailer.sendPasswordReset(user.email, resetUrl.toString());
+      } catch (error) {
+        console.error('Falha ao enviar e-mail de recuperação de senha:', error);
+        throw createAuthError('Não foi possível enviar o e-mail agora. Tente novamente mais tarde.', 503);
+      }
+
+      return genericResponse;
+    },
+
+    /**
+     * Validates and consumes a one-time reset token, then stores a fresh password hash.
+     *
+     * @param {string} token - Raw token from the emailed reset link.
+     * @param {string} password - New plain-text password.
+     * @returns {Promise&lt;object>} Reset confirmation.
+     * @throws {Error} With status 400 for invalid, expired, or reused tokens.
+     */
+    async resetPassword(token, password) {
+      const passwordHash = await hashPassword(password);
+      const reset = await passwordResetTokensRepository.resetPassword(
+        hashResetToken(token),
+        passwordHash,
+      );
+
+      if (!reset) {
+        throw createAuthError('Token inválido, expirado ou já utilizado.', 400);
+      }
+
+      return { message: 'Senha redefinida com sucesso.' };
+    },
+  };
+}
+
+module.exports = {
+  ACCESS_TOKEN_TTL_SECONDS,
+  MIN_PASSWORD_LENGTH,
+  createAuthError,
+  createAuthService,
+  hashResetToken,
+};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#asyncHandler">asyncHandler</a></li><li><a href="global.html#create">create</a></li><li><a href="global.html#createAuthController">createAuthController</a></li><li><a href="global.html#createAuthError">createAuthError</a></li><li><a href="global.html#createAuthRouter">createAuthRouter</a></li><li><a href="global.html#createAuthService">createAuthService</a></li><li><a href="global.html#createAuthenticateRequest">createAuthenticateRequest</a></li><li><a href="global.html#createPasswordResetMailer">createPasswordResetMailer</a></li><li><a href="global.html#createPasswordResetTokensRepository">createPasswordResetTokensRepository</a></li><li><a href="global.html#createSmtpTransport">createSmtpTransport</a></li><li><a href="global.html#createUsersRepository">createUsersRepository</a></li><li><a href="global.html#findByEmail">findByEmail</a></li><li><a href="global.html#findById">findById</a></li><li><a href="global.html#forgotPassword">forgotPassword</a></li><li><a href="global.html#hashResetToken">hashResetToken</a></li><li><a href="global.html#login">login</a></li><li><a href="global.html#requestPasswordReset">requestPasswordReset</a></li><li><a href="global.html#resetPassword">resetPassword</a></li><li><a href="global.html#seedInitialUser">seedInitialUser</a></li><li><a href="global.html#sendPasswordReset">sendPasswordReset</a></li><li><a href="global.html#startServer">startServer</a></li><li><a href="global.html#updatePassword">updatePassword</a></li><li><a href="global.html#validateAuthPayload">validateAuthPayload</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Fri Nov 06 2026 19:59:33 GMT-0300 (Horário Padrão de Brasília)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

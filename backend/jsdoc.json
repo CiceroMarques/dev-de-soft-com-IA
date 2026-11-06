@@ -1,0 +1,21 @@
+{
+  "source": {
+    "include": [
+      "src/controllers/auth.controller.js",
+      "src/middleware/authenticate-request.js",
+      "src/repositories/password-reset-tokens.repository.js",
+      "src/repositories/users.repository.js",
+      "src/routes/auth.routes.js",
+      "src/server.js",
+      "src/services/auth.service.js",
+      "src/services/password-reset-mailer.js",
+      "scripts/seed-user.js"
+    ],
+    "includePattern": ".+\\.js$",
+    "excludePattern": "(^|\\/|\\\\)tests($|\\/|\\\\)"
+  },
+  "opts": {
+    "destination": "docs/api",
+    "recurse": false
+  }
+}

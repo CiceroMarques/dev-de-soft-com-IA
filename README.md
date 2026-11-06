@@ -33,9 +33,9 @@ Este sistema foi organizado para seguir a arquitetura indicada no guia do projet
     └── copilot-instructions.md
 ```
 
-O backend disponibiliza o CRUD de salas e reservas pela API REST. Os modelos, endpoints e instruções de execução estão em [backend/README.md](./backend/README.md).
+O backend disponibiliza login JWT, recuperação de senha por e-mail SMTP e CRUD autenticado de salas e reservas. Os modelos, endpoints, configuração e instruções de execução estão em [backend/README.md](./backend/README.md).
 
-Para executar os testes automatizados, acesse `backend/` e rode `npm install` seguido de `npm test`. A API requer o MySQL iniciado pelo Docker Compose.
+Para executar os testes automatizados e gerar a documentação JSDoc, acesse `backend/` e rode `npm install`, `npm test` ou `npm run docs`. A API requer o MySQL e SMTP configurados no `.env`.
 
 ## Padrões visuais
 

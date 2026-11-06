@@ -56,7 +56,20 @@ describe('API de reservas', () => {
   let app;
 
   beforeEach(() => {
-    app = createApp(createInMemoryRepositories());
+    app = createApp({
+      ...createInMemoryRepositories(),
+      authenticateRequest: (req, res, next) => next(),
+      authService: {
+        async login() {},
+        async requestPasswordReset() {},
+        async resetPassword() {},
+      },
+      authService: {
+        async login() {},
+        async requestPasswordReset() {},
+        async resetPassword() {},
+      },
+    });
   });
 
   it('lista todas as reservas', async () => {

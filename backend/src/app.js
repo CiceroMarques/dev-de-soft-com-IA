@@ -1,17 +1,33 @@
 const express = require('express');
+const cors = require('cors');
 const { createRoomsRouter } = require('./routes/rooms.routes');
 const { createReservationsRouter } = require('./routes/reservations.routes');
+const { createAuthRouter } = require('./routes/auth.routes');
 
-function createApp({ roomsRepository, reservationsRepository }) {
-  if (!roomsRepository || !reservationsRepository) {
-    throw new Error('Os repositórios de salas e reservas devem ser fornecidos.');
+function createApp({
+  roomsRepository,
+  reservationsRepository,
+  authService,
+  authenticateRequest,
+  corsOrigin,
+}) {
+  if (!roomsRepository || !reservationsRepository || !authService || !authenticateRequest) {
+    throw new Error('Dependências da aplicação não foram fornecidas.');
   }
 
   const app = express();
 
+  if (corsOrigin) {
+    app.use(cors({ origin: corsOrigin, methods: ['GET', 'POST', 'PUT', 'DELETE'] }));
+  }
   app.use(express.json());
-  app.use('/api/salas', createRoomsRouter(roomsRepository));
-  app.use('/api/reservas', createReservationsRouter(reservationsRepository, roomsRepository));
+  app.use('/api/auth', createAuthRouter(authService));
+  app.use('/api/salas', authenticateRequest, createRoomsRouter(roomsRepository));
+  app.use(
+    '/api/reservas',
+    authenticateRequest,
+    createReservationsRouter(reservationsRepository, roomsRepository),
+  );
 
   app.use((error, req, res, next) => {
     if (res.headersSent) {
@@ -28,6 +44,14 @@ function createApp({ roomsRepository, reservationsRepository }) {
 
     if (error.code === 'ER_ROW_IS_REFERENCED_2') {
       return res.status(409).json({ error: 'Não é possível excluir uma sala com reservas associadas.' });
+    }
+
+    if (Number.isInteger(error.statusCode) && error.statusCode >= 400 && error.statusCode < 500) {
+      return res.status(error.statusCode).json({ error: error.message });
+    }
+
+    if (error.statusCode === 503) {
+      return res.status(503).json({ error: error.message });
     }
 
     console.error(error);
