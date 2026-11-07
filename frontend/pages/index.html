@@ -15,7 +15,7 @@
           Reserve<span>.</span>me
         </h1>
 
-        <form class="login-form validated-form" novalidate>
+        <form class="login-form validated-form" data-auth-form="login" novalidate>
           <div class="field">
             <p class="field-error" id="email-error" aria-live="polite"></p>
             <input
@@ -47,6 +47,7 @@
           </div>
 
           <p class="form-required-message" aria-live="polite"></p>
+          <p class="form-response-message" role="status" aria-live="polite"></p>
           <button class="submit-button" type="submit">Entrar</button>
           <a class="recovery-link" href="recuperar-senha.html">Esqueceu sua senha?</a>
         </form>

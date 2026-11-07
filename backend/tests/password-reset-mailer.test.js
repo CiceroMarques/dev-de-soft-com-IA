@@ -28,8 +28,15 @@ describe('Mailer de recuperação de senha', () => {
     assert.match(message.html, /redefinir sua senha/);
   });
 
-  it('exige configuração SMTP completa', () => {
-    assert.throws(() => createSmtpTransport({}), /Configuração SMTP incompleta/);
+  it('permite iniciar a API sem SMTP', () => {
+    assert.equal(createSmtpTransport({}), null);
+  });
+
+  it('rejeita configuração SMTP parcial', () => {
+    assert.throws(
+      () => createSmtpTransport({ SMTP_HOST: 'smtp.example.com' }),
+      /Configuração SMTP incompleta/,
+    );
   });
 
   it('rejeita porta SMTP inválida', () => {

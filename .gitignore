@@ -17,6 +17,7 @@ pnpm-debug.log*
 dist/
 build/
 coverage/
+backend/docs/api/
 
 # Local database files
 database/data/

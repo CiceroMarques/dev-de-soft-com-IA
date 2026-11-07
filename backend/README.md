@@ -32,7 +32,7 @@ Configure no `.env`:
 
 - `JWT_SECRET`: segredo aleatório de pelo menos 32 caracteres. Gere com `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`.
 - `FRONTEND_URL`: URL base da pasta de páginas do front-end, por exemplo `http://localhost:5500/frontend/pages`. A origem desta URL é a única permitida pelo CORS.
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` e `SMTP_FROM`: credenciais do provedor de e-mail.
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` e `SMTP_FROM`: credenciais do provedor de e-mail. São opcionais para testar login; sem SMTP, recuperação responde `503`.
 - `SEED_USER_NAME`, `SEED_USER_EMAIL` e `SEED_USER_PASSWORD`: dados da primeira conta de gerente; senha com pelo menos 12 caracteres e até 72 bytes.
 
 Crie a primeira conta após configurar o `.env`:
@@ -42,6 +42,14 @@ npm run seed:user
 ```
 
 O seed não altera a senha se o e-mail já existir. Nunca versione o `.env` nem use credenciais de exemplo em produção.
+
+Para popular o banco com três salas, cinco reservas futuras e essa conta de teste, configure os campos `SEED_USER_*` no `.env` e execute:
+
+```powershell
+npm run seed:demo
+```
+
+O seed é repetível e não altera senhas existentes nem duplica as reservas de demonstração. Ao criar a conta, ele mostra a senha definida no `.env`; use-a na tela de login. Com a configuração padrão, o e-mail é `demo@escola.local`. Altere a senha de demonstração antes de expor a API a qualquer rede.
 
 ### Endpoints públicos
 
@@ -58,6 +66,8 @@ Exemplo de login:
 ```
 
 A resposta contém `accessToken`, `expiresIn` e informações públicas do usuário. Para usar as rotas de salas e reservas, envie o JWT no cabeçalho `Authorization` usando o esquema Bearer. Sem token válido, essas rotas retornam `401`.
+
+A tela de login envia os dados para a API e mantém o token somente na sessão atual do navegador. Sirva o front-end via HTTP (por exemplo, VS Code Live Server na porta 5500); abrir o HTML diretamente como `file://` não permite a chamada CORS ao backend.
 
 Para redefinir a senha, envie `POST /api/auth/reset-password` com `{ "token": "<token do link>", "password": "<nova senha>" }`. O endpoint não revela se um e-mail existe; tokens são armazenados somente como hash, expiram e só podem ser usados uma vez. O front-end precisa implementar a página `redefinir-senha.html` para capturar o token do link enviado e chamar esse endpoint.
 

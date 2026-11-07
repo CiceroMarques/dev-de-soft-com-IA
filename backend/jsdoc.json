@@ -9,7 +9,8 @@
       "src/server.js",
       "src/services/auth.service.js",
       "src/services/password-reset-mailer.js",
-      "scripts/seed-user.js"
+      "scripts/seed-user.js",
+      "scripts/seed-demo-data.js"
     ],
     "includePattern": ".+\\.js$",
     "excludePattern": "(^|\\/|\\\\)tests($|\\/|\\\\)"

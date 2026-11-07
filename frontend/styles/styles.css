@@ -115,7 +115,8 @@ input {
 }
 
 .field-error,
-.form-required-message {
+.form-required-message,
+.form-response-message {
   min-height: 18px;
   margin: 0;
   color: var(--danger);
@@ -124,8 +125,17 @@ input {
 }
 
 .field-error:empty,
-.form-required-message:empty {
+.form-required-message:empty,
+.form-response-message:empty {
   visibility: hidden;
+}
+
+.form-response-message {
+  color: var(--purple-soft);
+}
+
+.form-response-message.is-error {
+  color: var(--danger);
 }
 
 .field input {
@@ -179,6 +189,11 @@ input {
 
 .submit-button:hover {
   filter: brightness(1.1);
+}
+
+.submit-button:disabled {
+  cursor: wait;
+  filter: grayscale(0.35);
 }
 
 .submit-button:active {

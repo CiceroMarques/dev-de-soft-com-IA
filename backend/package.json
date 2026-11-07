@@ -8,6 +8,7 @@
     "start": "node src/server.js",
     "test": "node --test",
     "seed:user": "node scripts/seed-user.js",
+    "seed:demo": "node scripts/seed-demo-data.js",
     "docs": "jsdoc -c jsdoc.json"
   },
   "dependencies": {

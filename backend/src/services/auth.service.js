@@ -119,6 +119,10 @@ function createAuthService({
       const genericResponse = {
         message: 'Se o e-mail estiver cadastrado, enviaremos instruções para redefinir a senha.',
       };
+      if (mailer.isConfigured === false) {
+        throw createAuthError('Recuperação de senha não está configurada neste ambiente.', 503);
+      }
+
       const user = await usersRepository.findByEmail(email.trim().toLowerCase());
       if (!user) {
         return genericResponse;

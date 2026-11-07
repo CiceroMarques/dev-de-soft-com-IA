@@ -9,6 +9,11 @@ const nodemailer = require('nodemailer');
  */
 function createSmtpTransport(environment = process.env) {
   const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD } = environment;
+  const configuredValues = [SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD];
+  if (configuredValues.every((value) => !value)) {
+    return null;
+  }
+
   if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASSWORD) {
     throw new Error('Configuração SMTP incompleta. Verifique SMTP_HOST, SMTP_PORT, SMTP_USER e SMTP_PASSWORD.');
   }
@@ -37,6 +42,8 @@ function createSmtpTransport(environment = process.env) {
  */
 function createPasswordResetMailer({ transport, from }) {
   return {
+    isConfigured: Boolean(transport && from),
+
     /**
      * Sends a single-use password reset link.
      *
@@ -45,6 +52,10 @@ function createPasswordResetMailer({ transport, from }) {
      * @returns {Promise<void>}
      */
     async sendPasswordReset(email, resetUrl) {
+      if (!transport || !from) {
+        throw new Error('SMTP não está configurado para enviar e-mails.');
+      }
+
       await transport.sendMail({
         from,
         to: email,

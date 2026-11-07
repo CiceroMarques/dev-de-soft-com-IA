@@ -91,6 +91,27 @@ describe('Serviço de autenticação', () => {
     assert.match(sentEmails[0].url, /^http:\/\/localhost:5500\/frontend\/pages\/redefinir-senha\.html\?token=/);
   });
 
+  it('retorna 503 sem consultar contas quando SMTP não está configurado', async () => {
+    const service = createAuthService({
+      usersRepository: {
+        async findByEmail() {
+          throw new Error('O repositório não deve ser consultado sem SMTP.');
+        },
+      },
+      passwordResetTokensRepository: {},
+      mailer: { isConfigured: false },
+      hashPassword: async (value) => value,
+      verifyPassword: async () => false,
+      createAccessToken: () => '',
+      frontendUrl: 'http://localhost:5500/frontend/pages',
+    });
+
+    await assert.rejects(service.requestPasswordReset('person@example.test'), {
+      statusCode: 503,
+      message: 'Recuperação de senha não está configurada neste ambiente.',
+    });
+  });
+
   it('atualiza a senha e invalida o token após a redefinição', async () => {
     const { service, users, sentEmails } = createAuthFixture();
     await service.requestPasswordReset('staff@school.test');
