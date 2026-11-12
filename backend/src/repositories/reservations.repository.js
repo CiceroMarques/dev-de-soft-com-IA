@@ -14,21 +14,24 @@ function mapReservation(row) {
     responsavel: row.responsavel,
     finalidade: row.finalidade,
     situacao: row.situacao,
+    ativo: Boolean(row.ativo),
   };
 }
 
 function createReservationsRepository(pool) {
   return {
-    async findAll() {
+    async findAll({ includeInactive = false } = {}) {
       const [rows] = await pool.execute(
-        'SELECT id, sala_id AS sala, data, inicio, fim, responsavel, finalidade, situacao FROM reservas ORDER BY data, inicio, id',
+        `SELECT id, sala_id AS sala, data, inicio, fim, responsavel, finalidade, situacao, ativo
+         FROM reservas ${includeInactive ? '' : 'WHERE ativo = 1'}
+         ORDER BY data, inicio, id`,
       );
       return rows.map(mapReservation);
     },
 
     async findById(id) {
       const [rows] = await pool.execute(
-        'SELECT id, sala_id AS sala, data, inicio, fim, responsavel, finalidade, situacao FROM reservas WHERE id = ?',
+        'SELECT id, sala_id AS sala, data, inicio, fim, responsavel, finalidade, situacao, ativo FROM reservas WHERE id = ?',
         [id],
       );
       return mapReservation(rows[0]);
@@ -36,7 +39,7 @@ function createReservationsRepository(pool) {
 
     async create(reservation) {
       const [result] = await pool.execute(
-        'INSERT INTO reservas (sala_id, data, inicio, fim, responsavel, finalidade, situacao) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO reservas (sala_id, data, inicio, fim, responsavel, finalidade, situacao, ativo) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
         [
           reservation.sala,
           reservation.data,
@@ -45,6 +48,7 @@ function createReservationsRepository(pool) {
           reservation.responsavel,
           reservation.finalidade,
           reservation.situacao,
+          !['Cancelada', 'Finalizada'].includes(reservation.situacao),
         ],
       );
       return this.findById(result.insertId);
@@ -52,7 +56,7 @@ function createReservationsRepository(pool) {
 
     async update(id, reservation) {
       await pool.execute(
-        'UPDATE reservas SET sala_id = ?, data = ?, inicio = ?, fim = ?, responsavel = ?, finalidade = ?, situacao = ? WHERE id = ?',
+        "UPDATE reservas SET sala_id = ?, data = ?, inicio = ?, fim = ?, responsavel = ?, finalidade = ?, situacao = ?, ativo = IF(? IN ('Cancelada', 'Finalizada'), 0, ativo) WHERE id = ?",
         [
           reservation.sala,
           reservation.data,
@@ -61,15 +65,17 @@ function createReservationsRepository(pool) {
           reservation.responsavel,
           reservation.finalidade,
           reservation.situacao,
+          reservation.situacao,
           id,
         ],
       );
       return this.findById(id);
     },
 
-    async delete(id) {
-      const [result] = await pool.execute('DELETE FROM reservas WHERE id = ?', [id]);
-      return result.affectedRows > 0;
+    async deactivate(id) {
+      await pool.execute('UPDATE reservas SET ativo = 0 WHERE id = ?', [id]);
+      const [rows] = await pool.execute('SELECT id FROM reservas WHERE id = ?', [id]);
+      return rows.length > 0;
     },
   };
 }

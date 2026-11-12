@@ -85,14 +85,15 @@ document.querySelectorAll(".validated-form").forEach((form) => {
 
       if (operation === "login" && result.accessToken) {
         window.sessionStorage.setItem("reserveAccessToken", result.accessToken);
-        responseMessage.textContent = `Bem-vindo(a), ${result.user.nome}. Login realizado com sucesso.`;
+        window.sessionStorage.setItem("reserveUser", JSON.stringify(result.user));
+        window.location.assign("dashboard.html");
       } else {
         responseMessage.textContent = result.message;
       }
     } catch (error) {
       responseMessage.textContent =
         error instanceof TypeError
-          ? "Não foi possível conectar à API. Verifique se o backend está em execução."
+          ? "Não foi possível acessar a API. Verifique se o backend está ativo e se FRONTEND_URL no .env corresponde à origem do Live Server (protocolo, host e porta). Reinicie a API após alterar o .env."
           : "A resposta da API não pôde ser processada.";
       responseMessage.classList.add("is-error");
     } finally {

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#05060E" />
+    <title>Cadastro de salas | Reserve.me</title>
+    <link rel="stylesheet" href="../styles/styles.css" />
+    <script src="../scripts/portal.js" defer></script>
+  </head>
+  <body class="portal-body" data-page="rooms">
+    <div class="portal-shell">
+      <header class="portal-header">
+        <a class="portal-brand" href="dashboard.html" aria-label="Reserve.me — painel">
+          Reserve<span>.</span>me
+        </a>
+        <div class="portal-user">
+          <span class="portal-user-name" data-user-name></span>
+          <button class="text-button" type="button" data-logout>Sair</button>
+        </div>
+      </header>
+
+      <nav class="portal-nav" aria-label="Menu principal">
+        <a href="dashboard.html">Painel</a>
+        <a href="salas.html" aria-current="page">Salas</a>
+        <a href="reservas.html">Reservas</a>
+      </nav>
+
+      <main class="portal-main">
+        <section class="portal-heading">
+          <p class="portal-eyebrow">GESTÃO DE ESPAÇOS</p>
+          <h1>Cadastro de salas</h1>
+          <p>Cadastre os espaços disponíveis para as atividades da escola.</p>
+        </section>
+
+        <section class="portal-panel" aria-labelledby="room-form-title">
+          <div class="section-heading">
+            <div>
+              <p class="portal-eyebrow">NOVA SALA</p>
+              <h2 id="room-form-title">Informações da sala</h2>
+            </div>
+          </div>
+          <form class="portal-form" data-room-form novalidate>
+            <div class="form-grid">
+              <label class="portal-field">
+                <span>Nome da sala</span>
+                <input id="room-name" name="nome" type="text" maxlength="120" autocomplete="off" required aria-describedby="room-name-error" aria-invalid="false" />
+                <span class="field-error" id="room-name-error" aria-live="polite"></span>
+              </label>
+              <label class="portal-field">
+                <span>Andar</span>
+                <input id="room-floor" name="andar" type="number" min="-2147483648" max="2147483647" step="1" required aria-describedby="room-floor-error" aria-invalid="false" />
+                <span class="field-error" id="room-floor-error" aria-live="polite"></span>
+              </label>
+              <label class="portal-field">
+                <span>Capacidade de pessoas</span>
+                <input id="room-capacity" name="capacidade" type="number" min="1" max="4294967295" step="1" required aria-describedby="room-capacity-error" aria-invalid="false" />
+                <span class="field-error" id="room-capacity-error" aria-live="polite"></span>
+              </label>
+              <label class="portal-field form-grid-wide">
+                <span>Recursos disponíveis</span>
+                <input id="room-resources" name="recursos" type="text" placeholder="Ex.: Projetor, quadro branco, computador" aria-describedby="room-resources-help room-resources-error" aria-invalid="false" />
+                <span class="field-help" id="room-resources-help">Separe cada recurso por vírgula. Se não houver recursos, deixe em branco.</span>
+                <span class="field-error" id="room-resources-error" aria-live="polite"></span>
+              </label>
+            </div>
+            <p class="required-notice" data-required-notice aria-live="polite"></p>
+            <p class="portal-feedback" data-form-feedback role="status" aria-live="polite"></p>
+            <button class="submit-button portal-submit" type="submit">Cadastrar sala</button>
+          </form>
+        </section>
+
+        <section class="portal-section" aria-labelledby="rooms-list-title">
+          <div class="section-heading">
+            <div>
+              <p class="portal-eyebrow">ESPAÇOS DISPONÍVEIS</p>
+              <h2 id="rooms-list-title">Salas cadastradas</h2>
+            </div>
+          </div>
+          <label class="history-toggle">
+            <input type="checkbox" data-include-inactive-rooms />
+            <span>Incluir salas desativadas no histórico</span>
+          </label>
+          <div class="record-list" data-room-list aria-live="polite">
+            <p class="empty-state">Carregando salas...</p>
+          </div>
+        </section>
+      </main>
+
+      <footer class="portal-footer">
+        <a href="termos-privacidade.html#termos">Termos de uso</a>
+        <span aria-hidden="true">·</span>
+        <a href="termos-privacidade.html#privacidade">Privacidade</a>
+      </footer>
+    </div>
+  </body>
+</html>

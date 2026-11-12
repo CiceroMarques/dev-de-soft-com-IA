@@ -21,7 +21,7 @@ describe('Dados de demonstração', () => {
     assert.equal(DEMO_RESERVATIONS.length, 5);
     for (const reservation of DEMO_RESERVATIONS) {
       assert.ok(DEMO_ROOMS.some((room) => room.nome === reservation.room));
-      assert.ok(['Pendente', 'Aprovada', 'Cancelada'].includes(reservation.situacao));
+      assert.ok(['Pendente', 'Aprovada', 'Cancelada', 'Finalizada'].includes(reservation.situacao));
     }
   });
 

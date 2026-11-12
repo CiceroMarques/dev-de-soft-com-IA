@@ -9,6 +9,8 @@
       "src/server.js",
       "src/services/auth.service.js",
       "src/services/password-reset-mailer.js",
+      "src/services/reservation-conflict.js",
+      "src/services/room-capacity.js",
       "scripts/seed-user.js",
       "scripts/seed-demo-data.js"
     ],

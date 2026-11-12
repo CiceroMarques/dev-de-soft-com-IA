@@ -15,14 +15,14 @@ function createInMemoryRepository() {
   let nextId = 1;
 
   return {
-    async findAll() {
-      return [...rooms.values()];
+    async findAll({ includeInactive = false } = {}) {
+      return [...rooms.values()].filter((room) => includeInactive || room.ativo);
     },
     async findById(id) {
       return rooms.get(id) ?? null;
     },
     async create(room) {
-      const createdRoom = { id: nextId++, ...room };
+      const createdRoom = { id: nextId++, ...room, ativo: true };
       rooms.set(createdRoom.id, createdRoom);
       return createdRoom;
     },
@@ -31,12 +31,18 @@ function createInMemoryRepository() {
         return null;
       }
 
-      const updatedRoom = { id, ...room };
+      const updatedRoom = { ...rooms.get(id), ...room };
       rooms.set(id, updatedRoom);
       return updatedRoom;
     },
-    async delete(id) {
-      return rooms.delete(id);
+    async deactivate(id) {
+      const room = rooms.get(id);
+      if (!room) {
+        return false;
+      }
+
+      room.ativo = false;
+      return true;
     },
   };
 }
@@ -58,7 +64,7 @@ describe('API de salas', () => {
         async findById() { return null; },
         async create(reservation) { return reservation; },
         async update() { return null; },
-        async delete() { return false; },
+        async deactivate() { return false; },
       },
     });
   });
@@ -74,7 +80,7 @@ describe('API de salas', () => {
     const response = await request(app).post('/api/salas').send(validRoom);
 
     assert.equal(response.status, 201);
-    assert.deepEqual(response.body, { id: 1, ...validRoom });
+    assert.deepEqual(response.body, { id: 1, ...validRoom, ativo: true });
   });
 
   it('busca uma sala pelo identificador', async () => {
@@ -82,7 +88,7 @@ describe('API de salas', () => {
     const response = await request(app).get('/api/salas/1');
 
     assert.equal(response.status, 200);
-    assert.deepEqual(response.body, { id: 1, ...validRoom });
+    assert.deepEqual(response.body, { id: 1, ...validRoom, ativo: true });
   });
 
   it('retorna 404 ao buscar uma sala inexistente', async () => {
@@ -103,7 +109,7 @@ describe('API de salas', () => {
     const response = await request(app).put('/api/salas/1').send(updatedRoom);
 
     assert.equal(response.status, 200);
-    assert.deepEqual(response.body, { id: 1, ...updatedRoom });
+    assert.deepEqual(response.body, { id: 1, ...updatedRoom, ativo: true });
   });
 
   it('retorna 404 ao atualizar uma sala inexistente', async () => {
@@ -113,17 +119,28 @@ describe('API de salas', () => {
     assert.equal(response.body.error, 'Sala não encontrada.');
   });
 
-  it('remove uma sala existente', async () => {
+  it('desativa uma sala sem apagar seu registro', async () => {
     await request(app).post('/api/salas').send(validRoom);
     const response = await request(app).delete('/api/salas/1');
     const listResponse = await request(app).get('/api/salas');
+    const historyResponse = await request(app).get('/api/salas?includeInactive=true');
 
     assert.equal(response.status, 204);
     assert.equal(listResponse.status, 200);
     assert.deepEqual(listResponse.body, []);
+    assert.equal(historyResponse.status, 200);
+    assert.deepEqual(historyResponse.body, [{ id: 1, ...validRoom, ativo: false }]);
   });
 
-  it('retorna 404 ao remover uma sala inexistente', async () => {
+  it('permite desativar novamente uma sala sem perder o registro', async () => {
+    await request(app).post('/api/salas').send(validRoom);
+    await request(app).delete('/api/salas/1');
+    const response = await request(app).delete('/api/salas/1');
+
+    assert.equal(response.status, 204);
+  });
+
+  it('retorna 404 ao desativar uma sala inexistente', async () => {
     const response = await request(app).delete('/api/salas/999');
 
     assert.equal(response.status, 404);

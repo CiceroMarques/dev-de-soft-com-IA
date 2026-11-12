@@ -24,21 +24,24 @@ function mapRoom(row) {
     andar: row.andar,
     capacidade: row.capacidade,
     recursos: normalizeResources(row.recursos),
+    ativo: Boolean(row.ativo),
   };
 }
 
 function createRoomsRepository(pool) {
   return {
-    async findAll() {
+    async findAll({ includeInactive = false } = {}) {
       const [rows] = await pool.execute(
-        'SELECT id, nome, andar, capacidade, recursos FROM salas ORDER BY id',
+        `SELECT id, nome, andar, capacidade, recursos, ativo
+         FROM salas ${includeInactive ? '' : 'WHERE ativo = 1'}
+         ORDER BY id`,
       );
       return rows.map(mapRoom);
     },
 
     async findById(id) {
       const [rows] = await pool.execute(
-        'SELECT id, nome, andar, capacidade, recursos FROM salas WHERE id = ?',
+        'SELECT id, nome, andar, capacidade, recursos, ativo FROM salas WHERE id = ?',
         [id],
       );
       return mapRoom(rows[0]);
@@ -60,9 +63,10 @@ function createRoomsRepository(pool) {
       return this.findById(id);
     },
 
-    async delete(id) {
-      const [result] = await pool.execute('DELETE FROM salas WHERE id = ?', [id]);
-      return result.affectedRows > 0;
+    async deactivate(id) {
+      await pool.execute('UPDATE salas SET ativo = 0 WHERE id = ?', [id]);
+      const [rows] = await pool.execute('SELECT id FROM salas WHERE id = ?', [id]);
+      return rows.length > 0;
     },
   };
 }

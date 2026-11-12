@@ -104,8 +104,8 @@ async function seedDemoData() {
 
       await pool.execute(
         `INSERT INTO reservas
-         (sala_id, data, inicio, fim, responsavel, finalidade, situacao)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+         (sala_id, data, inicio, fim, responsavel, finalidade, situacao, ativo)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           salaId,
           data,
@@ -114,6 +114,7 @@ async function seedDemoData() {
           name,
           reservation.finalidade,
           reservation.situacao,
+          !['Cancelada', 'Finalizada'].includes(reservation.situacao),
         ],
       );
     }

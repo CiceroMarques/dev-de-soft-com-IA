@@ -12,6 +12,7 @@ describe('Repositório MySQL de salas', () => {
           andar: 1,
           capacidade: 24,
           recursos: '["Computadores"]',
+          ativo: 1,
         }]];
       },
     };
@@ -23,6 +24,7 @@ describe('Repositório MySQL de salas', () => {
       andar: 1,
       capacidade: 24,
       recursos: ['Computadores'],
+      ativo: true,
     }]);
   });
 
@@ -41,6 +43,7 @@ describe('Repositório MySQL de salas', () => {
           andar: 0,
           capacidade: 30,
           recursos: ['Projetor'],
+          ativo: 1,
         }]];
       },
     };
@@ -52,7 +55,7 @@ describe('Repositório MySQL de salas', () => {
       recursos: ['Projetor'],
     };
 
-    assert.deepEqual(await repository.create(room), { id: 7, ...room });
+    assert.deepEqual(await repository.create(room), { id: 7, ...room, ativo: true });
     assert.deepEqual(calls[0].params, ['Sala de aula', 0, 30, '["Projetor"]']);
   });
 
@@ -64,5 +67,21 @@ describe('Repositório MySQL de salas', () => {
     });
 
     assert.equal(await repository.findById(404), null);
+  });
+
+  it('desativa uma sala por atualização e confirma que o registro permanece', async () => {
+    const calls = [];
+    const repository = createRoomsRepository({
+      async execute(sql, params) {
+        calls.push({ sql, params });
+        return sql.startsWith('SELECT') ? [[{ id: 7 }]] : [{ affectedRows: 1 }];
+      },
+    });
+
+    assert.equal(await repository.deactivate(7), true);
+    assert.match(calls[0].sql, /^UPDATE salas SET ativo = 0/);
+    assert.deepEqual(calls[0].params, [7]);
+    assert.match(calls[1].sql, /^SELECT id FROM salas/);
+    assert.equal(calls.some(({ sql }) => sql.startsWith('DELETE')), false);
   });
 });

@@ -122,6 +122,23 @@ describe('Fluxos integrados de autenticação', () => {
     assert.equal(response.headers['access-control-allow-origin'], 'http://localhost:5500');
   });
 
+  it('permite o endereço alternativo de loopback na mesma porta configurada', async () => {
+    const response = await request(app)
+      .options('/api/auth/login')
+      .set('Origin', 'http://127.0.0.1:5500')
+      .set('Access-Control-Request-Method', 'POST');
+
+    assert.equal(response.status, 204);
+    assert.equal(response.headers['access-control-allow-origin'], 'http://127.0.0.1:5500');
+
+    const differentPort = await request(app)
+      .options('/api/auth/login')
+      .set('Origin', 'http://127.0.0.1:5501')
+      .set('Access-Control-Request-Method', 'POST');
+
+    assert.equal(differentPort.headers['access-control-allow-origin'], undefined);
+  });
+
   it('redefine a senha por e-mail e impede reutilizar o token', async () => {
     const recovery = await request(app)
       .post('/api/auth/forgot-password')

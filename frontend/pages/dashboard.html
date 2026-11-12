@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#05060E" />
+    <title>Painel | Reserve.me</title>
+    <link rel="stylesheet" href="../styles/styles.css" />
+    <script src="../scripts/portal.js" defer></script>
+  </head>
+  <body class="portal-body" data-page="dashboard">
+    <div class="portal-shell">
+      <header class="portal-header">
+        <a class="portal-brand" href="dashboard.html" aria-label="Reserve.me — painel">
+          Reserve<span>.</span>me
+        </a>
+        <div class="portal-user">
+          <span class="portal-user-name" data-user-name></span>
+          <button class="text-button" type="button" data-logout>Sair</button>
+        </div>
+      </header>
+
+      <nav class="portal-nav" aria-label="Menu principal">
+        <a href="dashboard.html" aria-current="page">Painel</a>
+        <a href="salas.html">Salas</a>
+        <a href="reservas.html">Reservas</a>
+      </nav>
+
+      <main class="portal-main">
+        <section class="portal-heading">
+          <p class="portal-eyebrow">RESERVE.ME · GESTÃO DE ESPAÇOS</p>
+          <h1>Olá, <span data-first-name>equipe</span>.</h1>
+          <p>Acesse o cadastro de salas ou acompanhe e registre reservas.</p>
+        </section>
+
+        <section class="stats-grid" aria-label="Resumo do sistema" aria-live="polite">
+          <article class="stat-card">
+            <span class="stat-label">Salas cadastradas</span>
+            <strong class="stat-value" data-room-count>—</strong>
+          </article>
+          <article class="stat-card">
+            <span class="stat-label">Reservas registradas</span>
+            <strong class="stat-value" data-reservation-count>—</strong>
+          </article>
+          <article class="stat-card">
+            <span class="stat-label">Aguardando aprovação</span>
+            <strong class="stat-value" data-pending-count>—</strong>
+          </article>
+        </section>
+        <p class="portal-feedback" data-dashboard-feedback role="status" aria-live="polite"></p>
+
+        <section class="portal-section" aria-labelledby="shortcuts-title">
+          <div class="section-heading">
+            <div>
+              <p class="portal-eyebrow">ATALHOS</p>
+              <h2 id="shortcuts-title">O que você precisa fazer?</h2>
+            </div>
+          </div>
+          <div class="shortcut-grid">
+            <a class="shortcut-card" href="salas.html">
+              <span class="shortcut-icon" aria-hidden="true">01</span>
+              <span>
+                <strong>Cadastrar uma sala</strong>
+                <span>Informe nome, andar, capacidade e recursos.</span>
+              </span>
+              <span class="shortcut-arrow" aria-hidden="true">↗</span>
+            </a>
+            <a class="shortcut-card" href="reservas.html">
+              <span class="shortcut-icon" aria-hidden="true">02</span>
+              <span>
+                <strong>Registrar uma reserva</strong>
+                <span>Escolha uma sala, data e horário.</span>
+              </span>
+              <span class="shortcut-arrow" aria-hidden="true">↗</span>
+            </a>
+          </div>
+        </section>
+      </main>
+
+      <footer class="portal-footer">
+        <a href="termos-privacidade.html#termos">Termos de uso</a>
+        <span aria-hidden="true">·</span>
+        <a href="termos-privacidade.html#privacidade">Privacidade</a>
+      </footer>
+    </div>
+  </body>
+</html>

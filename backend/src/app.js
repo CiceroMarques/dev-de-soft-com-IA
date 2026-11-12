@@ -4,6 +4,23 @@ const { createRoomsRouter } = require('./routes/rooms.routes');
 const { createReservationsRouter } = require('./routes/reservations.routes');
 const { createAuthRouter } = require('./routes/auth.routes');
 
+function isAllowedLocalOrigin(origin, configuredOrigin) {
+  try {
+    const requestUrl = new URL(origin);
+    const configuredUrl = new URL(configuredOrigin);
+    const localHosts = new Set(['localhost', '127.0.0.1', '[::1]']);
+
+    return (
+      requestUrl.protocol === configuredUrl.protocol &&
+      requestUrl.port === configuredUrl.port &&
+      localHosts.has(requestUrl.hostname) &&
+      localHosts.has(configuredUrl.hostname)
+    );
+  } catch {
+    return false;
+  }
+}
+
 function createApp({
   roomsRepository,
   reservationsRepository,
@@ -18,7 +35,17 @@ function createApp({
   const app = express();
 
   if (corsOrigin) {
-    app.use(cors({ origin: corsOrigin, methods: ['GET', 'POST', 'PUT', 'DELETE'] }));
+    app.use(
+      cors({
+        origin(origin, callback) {
+          callback(
+            null,
+            !origin || origin === corsOrigin || isAllowedLocalOrigin(origin, corsOrigin),
+          );
+        },
+        methods: ['GET', 'POST', 'PUT', 'DELETE'],
+      }),
+    );
   }
   app.use(express.json());
   app.use('/api/auth', createAuthRouter(authService));

@@ -71,7 +71,8 @@ function validateRoom(body) {
 function createRoomsController(roomsRepository) {
   return {
     list: asyncHandler(async (req, res) => {
-      res.json(await roomsRepository.findAll());
+      const includeInactive = req.query.includeInactive === 'true';
+      res.json(await roomsRepository.findAll({ includeInactive }));
     }),
 
     getById: asyncHandler(async (req, res) => {
@@ -122,8 +123,8 @@ function createRoomsController(roomsRepository) {
         return;
       }
 
-      const removed = await roomsRepository.delete(id);
-      if (!removed) {
+      const deactivated = await roomsRepository.deactivate(id);
+      if (!deactivated) {
         return res.status(404).json({ error: 'Sala não encontrada.' });
       }
 

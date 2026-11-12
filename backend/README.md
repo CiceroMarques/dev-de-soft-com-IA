@@ -21,17 +21,18 @@ Na pasta `backend`, instale as dependências, configure as variáveis de ambient
 ```powershell
 Copy-Item .env.example .env
 npm install
+npm run migrate:retention
 npm start
 ```
 
-A API fica disponível em `http://localhost:3000`. As configurações do banco podem ser alteradas no arquivo `.env`.
+A migração é segura para bancos existentes: preserva salas e reservas, adiciona os indicadores de atividade, amplia as situações permitidas e desativa reservas já canceladas. Pode ser executada novamente sem duplicar colunas. A API fica disponível em `http://localhost:3000`. As configurações do banco podem ser alteradas no arquivo `.env`.
 
 ## Login e recuperação de senha
 
 Configure no `.env`:
 
 - `JWT_SECRET`: segredo aleatório de pelo menos 32 caracteres. Gere com `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`.
-- `FRONTEND_URL`: URL base da pasta de páginas do front-end, por exemplo `http://localhost:5500/frontend/pages`. A origem desta URL é a única permitida pelo CORS.
+- `FRONTEND_URL`: origem do front-end, incluindo protocolo e porta, por exemplo `http://localhost:5500`. O backend também permite `localhost`, `127.0.0.1` e `::1` nessa mesma origem/porta para facilitar o Live Server local.
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` e `SMTP_FROM`: credenciais do provedor de e-mail. São opcionais para testar login; sem SMTP, recuperação responde `503`.
 - `SEED_USER_NAME`, `SEED_USER_EMAIL` e `SEED_USER_PASSWORD`: dados da primeira conta de gerente; senha com pelo menos 12 caracteres e até 72 bytes.
 
@@ -95,13 +96,15 @@ No momento, todas as contas autenticadas têm acesso às mesmas operações de s
 
 | Método | Rota | Resultado |
 |---|---|---|
-| `GET` | `/api/salas` | Lista as salas |
+| `GET` | `/api/salas` | Lista salas ativas |
+| `GET` | `/api/salas?includeInactive=true` | Inclui salas desativadas para consultas históricas |
 | `GET` | `/api/salas/:id` | Busca uma sala |
 | `POST` | `/api/salas` | Cria uma sala; retorna `201` |
 | `PUT` | `/api/salas/:id` | Atualiza todos os campos da sala |
-| `DELETE` | `/api/salas/:id` | Remove a sala; retorna `204` |
+| `DELETE` | `/api/salas/:id` | Desativa a sala sem removê-la do banco; retorna `204` |
 
 IDs inválidos retornam `400`, salas inexistentes retornam `404` e dados inválidos retornam `400` com a lista de erros.
+O `DELETE` de sala é idempotente. Salas desativadas permanecem no banco e podem ser consultadas com `includeInactive=true`, mas não aparecem nas listas comuns nem podem ser selecionadas em novas reservas.
 
 ## Reservas
 
@@ -124,17 +127,23 @@ Uma reserva referencia uma sala pelo seu identificador:
 - `inicio` e `fim`: horários no formato `HH:mm`; o horário final deve ser posterior ao inicial.
 - `responsavel`: texto obrigatório com até 120 caracteres.
 - `finalidade`: texto obrigatório com até 500 caracteres.
-- `situacao`: `Pendente`, `Aprovada` ou `Cancelada`. Se omitida na criação, começa como `Pendente`.
+- `situacao`: `Pendente`, `Aprovada`, `Cancelada` ou `Finalizada`. Se omitida na criação, começa como `Pendente`. Reservas pendentes e aprovadas bloqueiam horários; canceladas e finalizadas não.
+- `ativo`: indicador de disponibilidade do registro. Reservas Canceladas e Finalizadas ficam desativadas automaticamente; também podem ser desativadas pelo endpoint de exclusão lógica.
 
 | Método | Rota | Resultado |
 |---|---|---|
-| `GET` | `/api/reservas` | Lista as reservas por data e horário |
+| `GET` | `/api/reservas` | Lista reservas ativas por data e horário |
+| `GET` | `/api/reservas?includeInactive=true` | Inclui reservas canceladas, finalizadas e desativadas para consultas históricas |
 | `GET` | `/api/reservas/:id` | Busca uma reserva |
-| `POST` | `/api/reservas` | Cria uma reserva; retorna `201` |
-| `PUT` | `/api/reservas/:id` | Atualiza todos os campos da reserva |
-| `DELETE` | `/api/reservas/:id` | Remove a reserva; retorna `204` |
+| `POST` | `/api/reservas` | Cria uma reserva; retorna `201` ou `409` em conflito de horário |
+| `PUT` | `/api/reservas/:id` | Atualiza todos os campos; retorna `409` se gerar conflito |
+| `DELETE` | `/api/reservas/:id` | Desativa a reserva sem apagar seu histórico; retorna `204` |
 
-Salas referenciadas não podem ser excluídas enquanto houver reservas associadas. A API ainda não verifica conflitos de horário entre reservas; essa regra depende de definir se pedidos pendentes também devem bloquear o horário.
+O `DELETE` de reserva é idempotente. Reservas canceladas e finalizadas têm `ativo: false` e podem ser consultadas com `includeInactive=true`. Nenhuma sala ou reserva é removida fisicamente por esses endpoints.
+
+A função `existeConflito(novaReserva, reservas)` detecta sobreposição quando sala e data coincidem. Dois horários que apenas encostam (por exemplo, uma reserva termina às 10:00 e a seguinte começa às 10:00) não conflitam. Reservas canceladas, finalizadas, desativadas e a própria reserva durante atualização são ignoradas. A API responde `409` ao criar ou atualizar uma reserva que conflite.
+
+A função `cabeNaSala(quantidadeAlunos, salaId, salas)` retorna `true` quando a sala existe e sua capacidade é maior ou igual à quantidade de alunos. Para quantidade acima da capacidade, identificador inválido ou sala inexistente, retorna `false`.
 
 ## Testes automatizados
 

@@ -1,5 +1,6 @@
-const RESERVATION_STATUSES = ['Pendente', 'Aprovada', 'Cancelada'];
+const RESERVATION_STATUSES = ['Pendente', 'Aprovada', 'Cancelada', 'Finalizada'];
 const MAX_UNSIGNED_INT = 4294967295;
+const { existeConflito } = require('../services/reservation-conflict');
 
 function asyncHandler(handler) {
   return (req, res, next) => {
@@ -108,7 +109,8 @@ function validateReservation(body, { defaultStatus = false } = {}) {
 function createReservationsController(reservationsRepository, roomsRepository) {
   return {
     list: asyncHandler(async (req, res) => {
-      res.json(await reservationsRepository.findAll());
+      const includeInactive = req.query.includeInactive === 'true';
+      res.json(await reservationsRepository.findAll({ includeInactive }));
     }),
 
     getById: asyncHandler(async (req, res) => {
@@ -132,8 +134,15 @@ function createReservationsController(reservationsRepository, roomsRepository) {
       }
 
       const room = await roomsRepository.findById(reservation.sala);
-      if (!room) {
-        return res.status(404).json({ error: 'Sala não encontrada.' });
+      if (!room || room.ativo === false) {
+        return res.status(404).json({ error: 'Sala não encontrada ou desativada.' });
+      }
+
+      const existingReservations = await reservationsRepository.findAll();
+      if (existeConflito(reservation, existingReservations)) {
+        return res.status(409).json({
+          error: 'Já existe uma reserva ativa para esta sala, data e horário.',
+        });
       }
 
       return res.status(201).json(await reservationsRepository.create(reservation));
@@ -151,8 +160,25 @@ function createReservationsController(reservationsRepository, roomsRepository) {
       }
 
       const room = await roomsRepository.findById(reservation.sala);
-      if (!room) {
-        return res.status(404).json({ error: 'Sala não encontrada.' });
+      if (!room || room.ativo === false) {
+        return res.status(404).json({ error: 'Sala não encontrada ou desativada.' });
+      }
+
+      const existingReservation = await reservationsRepository.findById(id);
+      if (!existingReservation) {
+        return res.status(404).json({ error: 'Reserva não encontrada.' });
+      }
+
+      const existingReservations = await reservationsRepository.findAll();
+      if (
+        existeConflito(
+          { ...reservation, id, ativo: existingReservation.ativo },
+          existingReservations,
+        )
+      ) {
+        return res.status(409).json({
+          error: 'Já existe uma reserva ativa para esta sala, data e horário.',
+        });
       }
 
       const updatedReservation = await reservationsRepository.update(id, reservation);
@@ -169,8 +195,8 @@ function createReservationsController(reservationsRepository, roomsRepository) {
         return;
       }
 
-      const removed = await reservationsRepository.delete(id);
-      if (!removed) {
+      const deactivated = await reservationsRepository.deactivate(id);
+      if (!deactivated) {
         return res.status(404).json({ error: 'Reserva não encontrada.' });
       }
 

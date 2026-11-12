@@ -9,6 +9,7 @@
     "test": "node --test",
     "seed:user": "node scripts/seed-user.js",
     "seed:demo": "node scripts/seed-demo-data.js",
+    "migrate:retention": "node scripts/migrate-retention.js",
     "docs": "jsdoc -c jsdoc.json"
   },
   "dependencies": {

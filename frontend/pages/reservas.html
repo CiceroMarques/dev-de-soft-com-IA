@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#05060E" />
+    <title>Registro de reservas | Reserve.me</title>
+    <link rel="stylesheet" href="../styles/styles.css" />
+    <script src="../scripts/portal.js" defer></script>
+  </head>
+  <body class="portal-body" data-page="reservations">
+    <div class="portal-shell">
+      <header class="portal-header">
+        <a class="portal-brand" href="dashboard.html" aria-label="Reserve.me — painel">
+          Reserve<span>.</span>me
+        </a>
+        <div class="portal-user">
+          <span class="portal-user-name" data-user-name></span>
+          <button class="text-button" type="button" data-logout>Sair</button>
+        </div>
+      </header>
+
+      <nav class="portal-nav" aria-label="Menu principal">
+        <a href="dashboard.html">Painel</a>
+        <a href="salas.html">Salas</a>
+        <a href="reservas.html" aria-current="page">Reservas</a>
+      </nav>
+
+      <main class="portal-main">
+        <section class="portal-heading">
+          <p class="portal-eyebrow">AGENDA DA ESCOLA</p>
+          <h1>Registro de reservas</h1>
+          <p>Solicite uma sala para uma atividade. Novas reservas ficam pendentes de aprovação.</p>
+        </section>
+
+        <section class="portal-panel" aria-labelledby="reservation-form-title">
+          <div class="section-heading">
+            <div>
+              <p class="portal-eyebrow">NOVA SOLICITAÇÃO</p>
+              <h2 id="reservation-form-title">Detalhes da reserva</h2>
+            </div>
+          </div>
+          <form class="portal-form" data-reservation-form novalidate>
+            <div class="form-grid">
+              <label class="portal-field">
+                <span>Sala</span>
+                <select id="reservation-room" name="sala" required aria-describedby="reservation-room-error" aria-invalid="false">
+                  <option value="">Selecione uma sala</option>
+                </select>
+                <span class="field-error" id="reservation-room-error" aria-live="polite"></span>
+              </label>
+              <label class="portal-field">
+                <span>Data</span>
+                <input id="reservation-date" name="data" type="date" required aria-describedby="reservation-date-error" aria-invalid="false" />
+                <span class="field-error" id="reservation-date-error" aria-live="polite"></span>
+              </label>
+              <label class="portal-field">
+                <span>Horário de início</span>
+                <input id="reservation-start" name="inicio" type="time" required aria-describedby="reservation-start-error" aria-invalid="false" />
+                <span class="field-error" id="reservation-start-error" aria-live="polite"></span>
+              </label>
+              <label class="portal-field">
+                <span>Horário de término</span>
+                <input id="reservation-end" name="fim" type="time" required aria-describedby="reservation-end-error" aria-invalid="false" />
+                <span class="field-error" id="reservation-end-error" aria-live="polite"></span>
+              </label>
+              <label class="portal-field">
+                <span>Responsável</span>
+                <input id="reservation-owner" name="responsavel" type="text" maxlength="120" autocomplete="name" required aria-describedby="reservation-owner-error" aria-invalid="false" />
+                <span class="field-error" id="reservation-owner-error" aria-live="polite"></span>
+              </label>
+              <label class="portal-field">
+                <span>Situação</span>
+                <select id="reservation-status" name="situacao" required aria-describedby="reservation-status-help reservation-status-error" aria-invalid="false">
+                  <option value="Pendente">Pendente</option>
+                  <option value="Aprovada">Aprovada</option>
+                  <option value="Cancelada">Cancelada</option>
+                  <option value="Finalizada">Finalizada</option>
+                </select>
+                <span class="field-help" id="reservation-status-help">Reservas canceladas ou finalizadas ficam desativadas, mas continuam no histórico.</span>
+                <span class="field-error" id="reservation-status-error" aria-live="polite"></span>
+              </label>
+              <label class="portal-field form-grid-wide">
+                <span>Finalidade</span>
+                <textarea id="reservation-purpose" name="finalidade" rows="3" maxlength="500" required aria-describedby="reservation-purpose-error" aria-invalid="false"></textarea>
+                <span class="field-error" id="reservation-purpose-error" aria-live="polite"></span>
+              </label>
+            </div>
+            <p class="required-notice" data-required-notice aria-live="polite"></p>
+            <p class="portal-feedback" data-form-feedback role="status" aria-live="polite"></p>
+            <button class="submit-button portal-submit" type="submit">Registrar reserva</button>
+          </form>
+        </section>
+
+        <section class="portal-section" aria-labelledby="reservations-list-title">
+          <div class="section-heading">
+            <div>
+              <p class="portal-eyebrow">AGENDA</p>
+              <h2 id="reservations-list-title">Reservas registradas</h2>
+            </div>
+          </div>
+          <label class="history-toggle">
+            <input type="checkbox" data-include-inactive-reservations />
+            <span>Incluir canceladas, finalizadas e desativadas no histórico</span>
+          </label>
+          <div class="record-list" data-reservation-list aria-live="polite">
+            <p class="empty-state">Carregando reservas...</p>
+          </div>
+        </section>
+      </main>
+
+      <footer class="portal-footer">
+        <a href="termos-privacidade.html#termos">Termos de uso</a>
+        <span aria-hidden="true">·</span>
+        <a href="termos-privacidade.html#privacidade">Privacidade</a>
+      </footer>
+    </div>
+  </body>
+</html>
